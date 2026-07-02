@@ -4,6 +4,7 @@ import re
 
 from app.catalog import CatalogItem, load_catalog, normalize_text, unique_items
 from app.config import MAX_RECOMMENDATIONS
+from app.llm import augment_search_text
 from app.retrieval import get_retriever
 from app.safety import (
     is_general_hiring_advice,
@@ -87,9 +88,10 @@ def respond(messages: list[Message]) -> ChatResponse:
             end=_asks_to_finalize(latest_norm),
         )
 
-    include_names = _intended_assessments(all_user_text)
-    exclude_names = _excluded_assessments(all_user_text)
-    query = _expanded_query(all_user_text)
+    retrieval_text = augment_search_text(messages, all_user_text)
+    include_names = _intended_assessments(retrieval_text)
+    exclude_names = _excluded_assessments(retrieval_text)
+    query = _expanded_query(retrieval_text)
     explicit_items = retriever.items_by_names(include_names)
     excluded_urls = {item.url for item in retriever.items_by_names(exclude_names)}
     if len(explicit_items) >= 3:

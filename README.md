@@ -8,8 +8,9 @@ Conversational FastAPI service for recommending SHL assessments from the officia
 - Recommends 1 to 10 SHL catalog assessments when enough context is present.
 - Handles job descriptions, refinements, confirmations, and assessment comparisons.
 - Refuses legal advice, general hiring advice, prompt injection, unrelated topics, and non-SHL recommendations.
-- Uses deterministic retrieval: local JSON catalog + TF-IDF cosine similarity + rule boosts.
-- Runs without an LLM or API key.
+- Uses Gemini for intent extraction when `GEMINI_API_KEY` is set.
+- Uses catalog retrieval for final selection: local JSON catalog + TF-IDF cosine similarity + rule boosts.
+- Validates every returned recommendation against the local SHL catalog.
 
 ## Project Structure
 
@@ -19,6 +20,7 @@ app/
   catalog.py      # catalog loading, validation, test-type mapping
   config.py       # paths and constants
   main.py         # FastAPI endpoints
+  llm.py          # optional Gemini intent extraction
   retrieval.py    # TF-IDF retrieval and deterministic ranking
   safety.py       # scope/refusal checks
   schemas.py      # Pydantic API models
@@ -50,7 +52,14 @@ python scripts/download_resources.py
 python scripts/process_catalog.py
 ```
 
-No `.env` values are required.
+Gemini is optional locally but should be configured in deployment if you want the submitted API to use an LLM:
+
+```bash
+export GEMINI_API_KEY="your-gemini-api-key"
+export GEMINI_MODEL="gemini-3.5-flash"
+```
+
+If Gemini is unavailable, slow, or not configured, the service falls back to deterministic catalog retrieval.
 
 ## Run Locally
 
@@ -105,7 +114,11 @@ The tests cover health, response schema, invalid request handling, vague-query c
 3. Use Python 3.11.
 4. Build command: `pip install -r requirements.txt`
 5. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-6. Verify `/health` and `/chat` after deployment.
+6. Add environment variables:
+   - `PYTHON_VERSION=3.11.11`
+   - `GEMINI_API_KEY=<your Gemini API key>`
+   - `GEMINI_MODEL=gemini-3.5-flash`
+7. Verify `/health` and `/chat` after deployment.
 
 ### Docker
 
@@ -122,13 +135,14 @@ docker run -p 8000:8000 shl-assessment-recommender
 - 1 to 10 recommendations only when making a shortlist.
 - Empty recommendations for clarifications and refusals.
 - All returned names and URLs are from `data/catalog_processed.json`.
+- Uses Gemini only for intent extraction; no LLM output is trusted as a catalog recommendation.
 - Uses SHL catalog data only; no fabricated assessments or URLs.
 - Supports clarification, recommendation, refinement, comparison, and refusal.
 - Includes tests, Dockerfile, and Render-compatible setup.
 
 ## Known Limitations
 
-- The service is deterministic and intentionally conservative; it does not use an LLM for nuanced phrasing.
+- If Gemini is missing or times out, the service falls back to deterministic retrieval.
 - If the catalog lacks a direct skill test, it recommends the closest catalog-grounded alternatives and says so.
 - Comparisons are limited to catalog fields available in the official JSON.
 
