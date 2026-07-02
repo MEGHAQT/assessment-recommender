@@ -26,4 +26,4 @@ I used the PDF requirements and the ten public sample conversations to identify 
 
 What did not work: strict JSON parsing failed on the official catalog due to an invalid control character; tolerant decoding fixed this without inventing data. Pure TF-IDF also over-ranked adjacent technical tests for explicit batteries, so I measured improvement by checking sample-like prompts and changed the system to use Gemini intent extraction plus explicit catalog-grounded intent matches when at least three strong products are found.
 
-AI tools used: Codex was used to inspect the assignment, implement the FastAPI project, generate tests and documentation, and run local verification. Gemini is used at runtime for intent extraction only; recommendation grounding remains deterministic and auditable.
+AI tools used: Kiro was used to inspect the assignment, implement the FastAPI project, generate tests and documentation, and run local verification. Gemini is used at runtime for intent extraction only; recommendation grounding remains deterministic and auditable.
